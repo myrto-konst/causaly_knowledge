@@ -17,13 +17,8 @@ Running `main.py` should read the `extra_metadata.csv` file located in the data 
 
 ## Set Up 
 1. Create a virtual environment at the root called `causaly_knowledge`.
-2. Use `pip install` to install the following packages:
-- Python: 3.11.1
-- mysql-connector-python: 8.0.31
-- pandas: 1.5.2
-- pip: 22.3.1
-- pytest: 7.2.0
-3. Initiate a new MySQL server, with username and password 'root'. If you decide to change either of those values, change the values in `server_credentials` in the `constants.py` accordingly.
+2. Initiate a new MySQL server, with username and password. By convention, they should both be 'root'.
+3. Add two environment variables to your computer, named `MYSQL_USER` and `MYSQL_PASSWORD`. Their values should correspond to the username and password set on step 2.
 4. Create a database in the MySQL server called `causaly_knowledge`, and inside create a table called `metadata` with the columns seen in the description of Iteration 1, step 1. 
 5. Populate the `metadata` table with the rows found in `data/metadata.csv`.
 6. You are all set!

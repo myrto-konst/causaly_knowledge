@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "causaly-knowledge"
+version = "0.0.0"
+description = "This project aims to give developers a space to test simple features/changes to the integration between locally saved data and a simple MySQL server."
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+packages = [{include = "causaly_knowledge"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pandas = "^1.5.2"
+mysql-connector-python = "^8.0.31"
+pip = "^22.3.1"
+pytest = "^7.2.0"
+pyyaml = "^6.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
