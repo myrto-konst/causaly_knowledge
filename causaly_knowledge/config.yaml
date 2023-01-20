@@ -1,0 +1,13 @@
+server_credentials:
+ user: 'MYSQL_USER' 
+ password: 'MYSQL_PASSWORD'
+
+metadata_file: 'data/metadata.csv'
+extra_metadata_file: 'data/extra_metadata.csv'
+metadata_to_clean: 'data/metadata_to_clean.csv'
+metadata_to_server: 'data/metadata_in_server.csv'
+
+server_name: 'production_data'
+table_name: 'metadata'
+
+run_stats: 'True'
