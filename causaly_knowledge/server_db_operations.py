@@ -17,7 +17,8 @@ def query_db(db_name, query, input=None, return_results=False, batch=False):
                 cursor.executemany(query, input)
             else:
                 cursor.execute(query, input)
-                results = cursor.fetchall()
+            
+            results = cursor.fetchall()
             connection.commit()
             print(f'Operation to {db_name} completed successfully.')
             if return_results:
@@ -72,8 +73,10 @@ def perform_deduplication(incoming_data, db_name, table_name, local_to_server_co
 
     rows_to_insert, rows_to_update = deduplicate_data(server_data, incoming_data, id_column_name, uuid_column_name, condition_1_column_name, condition_2_column_name, condition_2_dict, operation_type_column_name)
 
-    insert_data_to_server(db_name=db_name, table_name=table_name, data=rows_to_insert, columns=server_data.columns)
-    update_server_data(db_name, table_name, rows_to_update, operation_type_column_name, 'ACTIVE', 'OVERRIDE', id_column_name)
+    if not rows_to_insert.empty:
+        insert_data_to_server(db_name=db_name, table_name=table_name, data=rows_to_insert, columns=server_data.columns)
+    if not rows_to_update.empty:
+        update_server_data(db_name, table_name, rows_to_update, operation_type_column_name, 'ACTIVE', 'OVERRIDE', id_column_name)
 
     if config['run_stats']:
         stats_monitoring.update_incoming_article_stats(total=len(incoming_data),duplicate=len(server_data), outdated=len(rows_to_update))

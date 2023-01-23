@@ -1,3 +1,7 @@
+import sys
+from datetime import datetime
+
+
 stats = {
     'total_articles_in_db': {
         'OVERRIDE':0,
@@ -23,3 +27,25 @@ def update_incoming_article_stats(total=0, duplicate=0, new=0, outdated=0, lates
     stats['latest_version_incoming_articles'] += latest
     stats['outdated_incoming_articles'] += outdated
 
+
+def log_stats(stats_dict=stats, indent=0, message=''):
+    print(message)
+    for key, value in stats_dict.items():
+        if isinstance(value, dict):
+            print('\t' * indent + f'{key}: ')
+            log_stats(value, indent+1)
+        else:
+            print('\t' * (indent)+ f'{key}:  {value}')
+       
+
+
+def log_stats_to_file(stats_dict=stats, indent=0, message='', log_file_dir=''):
+   if log_file_dir != '':
+    original_stdout = sys.stdout
+    with open(log_file_dir, 'a') as f:
+        print('\n')
+        print(f'Deduplication done at {datetime.now()}')
+        sys.stdout = f 
+        log_stats(stats_dict=stats_dict, indent=indent, message=message)
+        print('\n')
+        sys.stdout = original_stdout

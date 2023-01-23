@@ -44,16 +44,16 @@ def keep_latest_unique_rows(df, id_column_name, condition_1_column_name, conditi
 def get_filtered_data(data, column_name, column_value):
     return data.loc[data[column_name] == column_value]
 
-def assign_new_column_value(data, column_name, new_column_value):
-    data[column_name] = data[column_name].apply(lambda x: new_column_value)
+def assign_new_column_value(data, column_name, old_column_value, new_column_value):
+    data[column_name] = data[column_name].replace([old_column_value], new_column_value)
 
     return data
 
 def get_rows_to_insert(outdated_rows, latest_rows, unique_rows, operation_type_column_name):
-    outdated_rows_to_insert = assign_new_column_value(get_filtered_data(outdated_rows, operation_type_column_name, ''),operation_type_column_name,  'OVERRIDE')
-    latest_rows_to_insert = assign_new_column_value(get_filtered_data(latest_rows,operation_type_column_name, ''),operation_type_column_name, 'ACTIVE')
-    new_rows_to_insert = assign_new_column_value(get_filtered_data(unique_rows,operation_type_column_name, ''),operation_type_column_name, 'ACTIVE')
-    
+    outdated_rows_to_insert = assign_new_column_value(get_filtered_data(outdated_rows, operation_type_column_name, ''),operation_type_column_name, '',  'OVERRIDE')
+    latest_rows_to_insert = assign_new_column_value(get_filtered_data(latest_rows,operation_type_column_name, ''),operation_type_column_name, '', 'ACTIVE')
+    new_rows_to_insert = assign_new_column_value(get_filtered_data(unique_rows,operation_type_column_name, ''),operation_type_column_name, '', 'ACTIVE')
+
     return pd.concat([outdated_rows_to_insert, latest_rows_to_insert, new_rows_to_insert])
 
 # make operation_type enum
@@ -64,12 +64,11 @@ def deduplicate_data(server_data, incoming_data, id_column_name, uuid_column_nam
 
     unique_data = get_unique_rows(all_data, id_column_name)
     duplicated_data = sort_data(get_duplicate_rows(df=all_data, id_column_name=id_column_name), condition_1_column_name=condition_1_column_name, condition_2_column_name=condition_2_column_name, condition_2_dict=condition_2_dict)
-
     outdated_rows = get_outdated_rows(duplicated_data, id_column_name, condition_1_column_name, condition_2_column_name, condition_2_dict)
     latest_rows = get_latest_rows(duplicated_data, id_column_name, condition_1_column_name, condition_2_column_name, condition_2_dict)
  
     rows_to_insert = get_rows_to_insert(outdated_rows, latest_rows, unique_data, operation_type_column_name)
-    outdated_rows_to_update = assign_new_column_value(get_filtered_data(outdated_rows, operation_type_column_name, 'ACTIVE'), operation_type_column_name, 'OVERRIDE')
+    outdated_rows_to_update = assign_new_column_value(get_filtered_data(outdated_rows, operation_type_column_name, 'ACTIVE'), operation_type_column_name, 'ACTIVE', 'OVERRIDE')
 
     if config['run_stats']:
         stats_monitoring.update_incoming_article_stats(new=len(unique_data), latest=len(latest_rows),outdated_incoming=len(rows_to_insert[rows_to_insert[operation_type_column_name]=='OVERRIDE']))

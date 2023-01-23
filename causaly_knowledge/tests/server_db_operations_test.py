@@ -1,176 +1,260 @@
-# from unittest.mock import MagicMock
-# import pandas as pd
+import pandas as pd
 # import mysql.connector
+from causaly_knowledge.tests.mock_db import MockDB
+from causaly_knowledge.server_db_operations import query_db,fetch_all_data,fetch_all_active_duplicate_data, insert_data_to_server,update_server_data,add_local_data_to_server_db, perform_deduplication
 
-# from causaly_knowledge.server_db_operations import insert_row_to_server, compare_articles
+db_name = 'testdb'
+table_name = 'test_table'
+local_to_server_columns={ 
+    'uuid': 'article_uuid',
+    'name': 'article_name', 
+    'ID': 'article_ID', 
+    'journal': 'journal_name',
+    'article_status': 'citation_status',
+    'article_version': 'citation_version',
+    'operation_type': 'operation_type'
+}
 
-# db_name = 'test_data'
-# table_name = 'metadata'
-# local_to_server_columns={ 
-#     'name': 'article_name', 
-#     'ID': 'article_ID', 
-#     'journal': 'journal_name',
-#     'article_status': 'citation_status',
-#     'article_version': 'citation_version',
-#     'uuid': 'article_uuid',
-#     'operation_type': 'operation_type'
-# }
+override_row_3= {
+    'article_uuid': '27258656_OLDMEDLINE_1',
+    'article_name': 'A new science of happiness: the paradox of pleasure',
+    'article_ID':27258656,
+    'journal_name': 'Ann N Y Acad Sci',
+    'citation_status': 'OLDMEDLINE',
+    'citation_version': '1',
+    'operation_type': 'OVERRIDE'
+}
+active_row_1 = {
+        'article_uuid': '27258656_MEDLINE_1',
+        'article_name': 'A new science of happiness: the paradox of pleasure',
+        'article_ID': 27258656,
+        'journal_name': 'Ann N Y Acad Sci',
+        'citation_status': 'MEDLINE',
+        'citation_version': '1',
+        'operation_type': 'ACTIVE'
+    }
+override_row_1 = {
+        'article_uuid': '27258656_MEDLINE_1',
+        'article_name': 'A new science of happiness: the paradox of pleasure',
+        'article_ID': 27258656,
+        'journal_name': 'Ann N Y Acad Sci',
+        'citation_status': 'MEDLINE',
+        'citation_version': '1',
+        'operation_type': 'OVERRIDE'
+    }
+active_row_2 = {
+        'article_uuid': '36343268_MEDLINE_1',
+        'article_name': 'Wealth redistribution promotes happiness',
+        'article_ID':36343268,
+        'journal_name': 'Proc Natl Acad Sci U S A',
+        'citation_status': 'MEDLINE',
+        'citation_version': '1',
+        'operation_type': 'ACTIVE'
+    }
+new_active_row_2 = {
+        'article_uuid': '36343268_MEDLINE_2',
+        'article_name': 'Wealth redistribution promotes happiness',
+        'article_ID':36343268,
+        'journal_name': 'Proc Natl Acad Sci U S A',
+        'citation_status': 'MEDLINE',
+        'citation_version': '2',
+        'operation_type': 'ACTIVE'
+    }
+override_row_2 = {
+        'article_uuid': '36343268_MEDLINE_1',
+        'article_ID':36343268,
+        'article_name': 'Wealth redistribution promotes happiness',
+        'journal_name': 'Proc Natl Acad Sci U S A',
+        'citation_status': 'MEDLINE',
+        'citation_version': '1',
+        'operation_type': 'OVERRIDE'
+    }
+active_row_4 = {
+        'article_uuid': '31722899_In-Data-Review_2',
+        'article_name': 'Prescriptions for happiness',
+        'article_ID':31722899,
+        'journal_name': 'Can Fam Physician',
+        'citation_status': 'In-Data-Review',
+        'citation_version': '2',
+        'operation_type': 'ACTIVE'
+    }
+local_row_1 = {
+        'uuid': '27258656_MEDLINE_1',
+        'name': 'A new science of happiness: the paradox of pleasure',
+        'ID':27258656,
+        'journal': 'Ann N Y Acad Sci',
+        'article_status': 'MEDLINE',
+        'article_version': '1',
+        'operation_type': '',
+    }
 
-# existing_row_1_overridden= {
-#     'article_ID':27258656,
-#     'article_name': 'A new science of happiness: the paradox of pleasure',
-#     'journal_name': 'Ann N Y Acad Sci',
-#     'citation_status': 'MEDLINE',
-#     'citation_version': '1',
-#     'article_uuid': '27258656_MEDLINE_1',
-#     'operation_type': 'OVERRIDE'
-# }
-# existing_row_1 = {
-#         'article_ID':27258656,
-#         'article_name': 'A new science of happiness: the paradox of pleasure',
-#         'journal_name': 'Ann N Y Acad Sci',
-#         'citation_status': 'MEDLINE',
-#         'citation_version': '1',
-#         'article_uuid': '27258656_MEDLINE_1',
-#         'operation_type': 'ACTIVE'
-#     }
-# existing_row_2 = {
-#         'article_ID':27258656,
-#         'article_name': 'A new science of happiness: the paradox of pleasure',
-#         'journal_name': 'Ann N Y Acad Sci',
-#         'citation_status': 'In-Process',
-#         'citation_version': '1',
-#         'article_uuid': '27258656_In-Process_1',
-#         'operation_type': 'ACTIVE'
-#     }
-# existing_row_3 = {
-#         'article_ID':27258656,
-#         'article_name': 'A new science of happiness: the paradox of pleasure',
-#         'journal_name': 'Ann N Y Acad Sci',
-#         'citation_status': 'MEDLINE',
-#         'citation_version': '2',
-#         'article_uuid': '27258656_MEDLINE_1',
-#         'operation_type': 'ACTIVE'
-#     }
-# incoming_row = {
-#         'article_ID':27258656,
-#         'article_name': 'A new science of happiness: the paradox of pleasure',
-#         'journal_name': 'Ann N Y Acad Sci',
-#         'citation_status': 'MEDLINE',
-#         'citation_version': '1',
-#         'article_uuid': '27258656_MEDLINE_1',
-#         'operation_type': 'ACTIVE'
-#     }
-# updated_row = {
-#         'article_ID':27258656,
-#         'article_name': 'A new science of happiness: the paradox of pleasure',
-#         'journal_name': 'Ann N Y Acad Sci',
-#         'citation_status': 'MEDLINE',
-#         'citation_version': '1',
-#         'article_uuid': '27258656_MEDLINE_1',
-#         'operation_type': 'OVERRIDE'
-#     }
-# incoming_data = {
-#         'article_ID':[27258656],
-#         'article_name':[ 'A new science of happiness: the paradox of pleasure'],
-#         'journal_name':[ 'Ann N Y Acad Sci'],
-#         'citation_status':[ 'MEDLINE'],
-#         'citation_version':[ '1'],
-#         'article_uuid':[ '27258656_MEDLINE_1'],
-#         'operation_type': ['ACTIVE']
-#     }
+local_row_2 = {
+        'uuid': '36343268_MEDLINE_2',
+        'name': 'Wealth redistribution promotes happiness',
+        'ID':36343268,
+        'journal': 'Proc Natl Acad Sci U S A',
+        'article_status': 'MEDLINE',
+        'article_version': '2',
+        'operation_type': ''
+    }
 
-# # def append_row(mock_cursor, row):
-# #     if row not in mock_cursor.rows:
-# #         mock_cursor.rows.append(row) 
-# #         return mock_cursor.rows
-# #     else: 
-# #         return [mysql.connector.errors.IntegrityError]
+local_row_4 = {
+        'uuid': '31722899_In-Data-Review_2',
+        'name': 'Prescriptions for happiness',
+        'ID':31722899,
+        'journal': 'Can Fam Physician',
+        'article_status': 'In-Data-Review',
+        'article_version': '2',
+        'operation_type': ''
+    }
+incoming_row_1 = {
+        'uuid': '27258656_MEDLINE_1',
+        'name': 'A new science of happiness: the paradox of pleasure',
+        'ID':27258656,
+        'journal': 'Ann N Y Acad Sci',
+        'article_status': 'MEDLINE',
+        'article_version': '1',
+        'operation_type': 'ACTIVE',
+    }
+old_incoming_row_2 = {
+        'uuid': '36343268_MEDLINE_1',
+        'name': 'Wealth redistribution promotes happiness',
+        'ID':36343268,
+        'journal': 'Proc Natl Acad Sci U S A',
+        'article_status': 'MEDLINE',
+        'article_version': '1',
+        'operation_type': 'ACTIVE'
+    }
+incoming_row_2 = {
+        'uuid': '36343268_MEDLINE_2',
+        'name': 'Wealth redistribution promotes happiness',
+        'ID':36343268,
+        'journal': 'Proc Natl Acad Sci U S A',
+        'article_status': 'MEDLINE',
+        'article_version': '2',
+        'operation_type': 'ACTIVE'
+    }
 
-# # def insert_row(mock_cursor, row):
-# #     mock_cursor.configure_mock(
-# #         **{
-# #         "fetch_all": lambda: append_row(mock_cursor=mock_cursor, row=row)
-# #     })
+incoming_row_4 = {
+        'uuid': '31722899_In-Data-Review_2',
+        'name': 'Prescriptions for happiness',
+        'ID':31722899,
+        'journal': 'Can Fam Physician',
+        'article_status': 'In-Data-Review',
+        'article_version': '2',
+        'operation_type': 'ACTIVE'
+    }
 
-# # # def update_row(mock_cursor, query):
-# # #     mock_cursor.configure_mock(
-# # #         **{
-# # #         "fetch_all": lambda query: how to extract info from query? is there a better way?
-# # #     })
 
-# # def generate_mock_connection():
-# #     mock_connection = MagicMock()
-# #     mock_connection.configure_mock(
-# #         **{
-# #             'commit': lambda : print("Mock Commit!")
-# #     })
+def test_query_db():
+    db = MockDB(db_name=db_name)
+    db.setUpClass()
+    expected = tuple(active_row_1.values())
 
-# #     return mock_connection
-
-# # def test_insert_row_to_server_successful():
-# #     expected = tuple(pd.Series(incoming_row))
-
-# #     mock_cursor = MagicMock()
-# #     mock_cursor.configure_mock(
-# #     **{
-# #         "rows": [],
-# #         "execute": lambda sql, row: insert_row(mock_cursor=mock_cursor, row=row)
-
-# #     }) 
-# #     mock_connection = generate_mock_connection()
+    columns = ','.join([str(i) for i in list(active_row_1.keys())])
+    insert_query = f'INSERT INTO {db_name}.{table_name} ({columns})  VALUES (' + '%s,'*(len(active_row_1)-1) + '%s)'
+    input = list(active_row_1.values())
+    query_db(db_name=db_name,input=input, query=insert_query)
     
-# #     insert_row_to_server(db_name=db_name, table_name=table_name, columns=local_to_server_columns, row=pd.Series(incoming_row), connection=mock_connection, cursor=mock_cursor)
-# #     actual = mock_cursor.fetch_all()[-1]
-
-# #     assert expected == actual
-
-# # def test_insert_row_to_server_duplicate():
-# #     expected = mysql.connector.errors.IntegrityError
-# #     # mock connection and cursor
-# #     mock_cursor = MagicMock()
-# #     mock_cursor.configure_mock(
-# #     **{
-# #         "rows": [tuple(pd.Series(incoming_row))],
-# #         "execute": lambda sql, row: insert_row(mock_cursor=mock_cursor, row=row)
-
-# #     }) 
+    fetch_query = f'SELECT * FROM {db_name}.{table_name}'
+    actual = query_db(db_name=db_name, query=fetch_query, return_results=True)[0]
+    db.tearDownClass()
     
-# #     mock_connection = generate_mock_connection()
+    assert expected == actual
 
-# #     insert_row_to_server(db_name=db_name, table_name=table_name, columns=local_to_server_columns, row=pd.Series(incoming_row), connection=mock_connection, cursor=mock_cursor)
-# #     actual = mock_cursor.fetch_all()[-1]
+def test_fetch_all_active_duplicate_data():
+    db = MockDB(db_name=db_name)
+    db.setUpClass()
 
-# #     assert expected == actual
+    columns = list(active_row_1.keys())
+    expected = pd.DataFrame([active_row_1,active_row_2], columns=columns)
 
-# # # not sure how to extract info from query in order to mock it
-# # def test_update_row_in_server_successful():
-# #     expected = tuple(pd.Series(existing_row_1_overridden))
-
-
-# # # cursor and connection are instantiated within the function - can't mock SAME WITH 
-# # # def test_add_local_data_to_server_db_successful():
-# # #     expected = [tuple(pd.Series(incoming_row)),tuple(pd.Series(existing_row))]
+    columns_str = ','.join([str(i) for i in list(active_row_1.keys())])
+    insert_query = f'INSERT INTO {db_name}.{table_name} ({columns_str})  VALUES (' + '%s,'*(len(active_row_1)-1) + '%s)'
+    input = [list(active_row_1.values()),list(active_row_2.values()),list(override_row_3.values())]
+    query_db(db_name=db_name,input=input, query=insert_query, batch=True)
     
-# # #     add_local_data_to_server_db(db_name=db_name, table_name=table_name, local_to_server_columns=local_to_server_columns, data=pd.DataFrame.from_dict(incoming_data), server_credentials={'user': 'root', 'password':'rootroot'})
+    actual = fetch_all_active_duplicate_data(incoming_data=expected, db_name=db_name, table_name=table_name, operation_type_column_name='operation_type', id_column_name='article_ID')
+    db.tearDownClass()
 
-# # #     assert expected.sort() == expected.sort()
+    assert expected.equals(actual)
 
-# # def test_compare_articles_incoming_new():
-# #     expected = 0
-# #     actual = compare_articles(matched_article=existing_row_2, incoming_article=incoming_row)
+def test_fetch_all_data():
+    db = MockDB(db_name=db_name)
+    db.setUpClass()
+    columns = list(active_row_1.keys())
+    expected = pd.DataFrame([ active_row_1,override_row_3, active_row_2], columns=columns)
 
-# #     assert expected == actual
+    columns_str = ','.join([str(i) for i in list(active_row_1.keys())])
+    insert_query = f'INSERT INTO {db_name}.{table_name} ({columns_str})  VALUES (' + '%s,'*(len(active_row_1)-1) + '%s)'
+    input = [list(active_row_1.values()),list(active_row_2.values()), list(override_row_3.values())]
+    query_db(db_name=db_name,input=input, query=insert_query, batch=True)
+    
+    actual = fetch_all_data(db_name=db_name, table_name=table_name, columns=columns)
+    db.tearDownClass()
+    
+    assert expected.equals(actual)
 
-# # def test_compare_articles_incoming_exists():
-# #     expected = 1
-# #     actual = compare_articles(matched_article=existing_row_1, incoming_article=incoming_row)
+def test_insert_data_to_server():
+    db = MockDB(db_name=db_name)
+    db.setUpClass()
+    expected = [tuple(active_row_1.values()),tuple(override_row_3.values()), tuple(active_row_2.values())].sort()
 
-# #     assert expected == actual
+    input = pd.DataFrame([ active_row_1,override_row_3, active_row_2], columns=list(active_row_1.keys()))
+    insert_data_to_server(db_name=db_name, table_name=table_name, columns=input.columns, data=input)
+    
+    fetch_query = f'SELECT * FROM {db_name}.{table_name}'
+    actual = query_db(db_name=db_name, query=fetch_query, return_results=True).sort()
+    db.tearDownClass()
+    
+    assert expected == actual
 
-# # def test_compare_articles_incoming_overriden():
-# #     expected = 2
-# #     actual = compare_articles(matched_article=existing_row_3, incoming_article=incoming_row)
+def test_update_server_data():
+    db = MockDB(db_name=db_name)
+    db.setUpClass()
+    expected = [tuple(override_row_1.values())].sort()
 
-# #     assert expected == actual
+    input = pd.DataFrame([incoming_row_1], columns=list(active_row_1.keys()))
+    insert_data_to_server(db_name=db_name, table_name=table_name, columns=input.columns, data=input)
+    update_server_data(db_name=db_name, table_name=table_name, data=input, column_name_to_update='operation_type', id_column_name='article_ID', old_value='ACTIVE', updated_value='OVERRIDE')
+    
+    fetch_query = f'SELECT * FROM {db_name}.{table_name}'
+    actual = query_db(db_name=db_name, query=fetch_query, return_results=True).sort()
+    db.tearDownClass()
+
+    assert expected == actual
+
+def test_add_local_data_to_server_db():
+    db = MockDB(db_name=db_name)
+    db.setUpClass()
+    expected = [tuple(active_row_1.values())].sort()
+
+    input = pd.DataFrame([incoming_row_1], columns=list(local_row_1.keys()))
+    add_local_data_to_server_db(db_name=db_name, table_name=table_name, local_to_server_columns=local_to_server_columns, data=input)
+    
+    fetch_query = f'SELECT * FROM {db_name}.{table_name}'
+    actual = query_db(db_name=db_name, query=fetch_query, return_results=True).sort()
+    db.tearDownClass()
+    
+    assert expected == actual
+
+def test_perform_deduplication():
+    db = MockDB(db_name=db_name)
+    db.setUpClass()
+    expected = [tuple(active_row_1.values()),tuple(new_active_row_2.values()),tuple(active_row_4.values()), tuple(override_row_2.values())].sort()
+
+    input = pd.DataFrame([incoming_row_1, incoming_row_2], columns=list(local_row_1.keys()))
+    add_local_data_to_server_db(db_name=db_name, table_name=table_name, local_to_server_columns=local_to_server_columns, data=input)
+
+    incoming_data = pd.DataFrame([local_row_1, local_row_2, local_row_4], columns=list(local_row_1.keys()))
+    perform_deduplication(incoming_data=incoming_data,db_name=db_name, table_name=table_name, local_to_server_columns=local_to_server_columns)
+    
+    fetch_query = f'SELECT * FROM {db_name}.{table_name}'
+    actual = query_db(db_name=db_name, query=fetch_query, return_results=True).sort()
+    db.tearDownClass()
+    
+    print(expected)
+    print(actual)
+    assert expected == actual
+
 

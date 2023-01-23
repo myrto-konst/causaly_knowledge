@@ -12,6 +12,7 @@ test_file_outdated = '../test_data/outdated_metadata.csv'
 test_file_deduplicated = '../test_data/deduplicated_metadata.csv'
 test_file_added_empty_column = '../test_data/metadata_added_empty_column.csv'
 test_file_added_uuid_column = '../test_data/metadata_uuid_column.csv'
+test_file_assign_new_value_column = '../test_data/duplicates_metadata_all_columns.csv'
 
 server_to_local_columns={'article_name': 'name', 
     'article_ID': 'ID', 
@@ -83,7 +84,8 @@ def test_get_unique_rows_existence():
 def test_get_unique_rows():
     actual = read_local_data(file_name= test_file_with_duplicates_removed)
     expected = get_unique_rows(df=read_local_data(file_name= test_file_with_duplicates), id_column_name=id_column_name)
-    
+    print(actual.reset_index(drop=True))
+    print(expected.reset_index(drop=True))
     assert actual.reset_index(drop=True).equals(expected.reset_index(drop=True))
 
 def test_get_duplicate_rows_existence():
@@ -141,8 +143,8 @@ def test_get_filtered_data():
     assert actual == expected
 
 def test_assign_new_column_value():
-    actual = [35135238]*15
-    expected = assign_new_column_value(data=read_local_data(file_name= test_file_with_duplicates), column_name='article_ID', new_column_value=35135238)['article_ID'].values.tolist()
+    actual = [2]*15
+    expected = assign_new_column_value(data=read_local_data(file_name= test_file_assign_new_value_column), column_name='citation_version', old_column_value=1, new_column_value=2)['citation_version'].values.tolist()
 
     assert actual == expected
 
