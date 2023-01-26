@@ -13,7 +13,7 @@ class MockDB(TestCase):
     def __init__(self, db_name):
         self.db_name = db_name
 
-        config_module.load_config(config_file_path)
+        config_module._load_config(config_file_path)
         self.server_credentials = config_module.config['server_credentials']
         
 
@@ -38,7 +38,6 @@ class MockDB(TestCase):
         except mysql.connector.Error as err:
             print("Failed creating database: {}".format(err))
             exit(1)
-        # connection.database = self.db_name
 
         query = f"""CREATE TABLE {self.db_name}.test_table (
                   article_uuid varchar(255) PRIMARY KEY,

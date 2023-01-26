@@ -4,7 +4,6 @@ from mapping_constants import medline_status
 import pandas as pd
 from utils import print_error_messages
 from config_module import config
-import stats_monitoring
 
 def query_db(db_name, query, input=None, return_results=False, batch=False):
     server_credentials = config['server_credentials']
@@ -39,15 +38,20 @@ def fetch_all_active_duplicate_data(incoming_data, db_name,table_name, id_column
     
     return duplicate_data
 
-def fetch_all_data(db_name,table_name, columns):
+def fetch_all_data(db_name,table_name, columns, counts=True):
     fetch_query = f'SELECT * FROM {db_name}.{table_name}'
     results = query_db(db_name=db_name, query=fetch_query, return_results=True)
 
     all_data = pd.DataFrame(results, columns =columns)    
-    for operation_type in ['ACTIVE', 'OVERRIDE', 'DELETED']:
-        stats_monitoring.update_existing_articles_stats(operation_type, (all_data['operation_type'] == operation_type).sum())
     
-    return all_data
+    if counts:
+        db_counts = {}
+        # todo make operation type enum
+        for operation_type in ['ACTIVE', 'OVERRIDE', 'DELETED']:
+            db_counts[operation_type] = (all_data['operation_type'] == operation_type).sum()
+        db_counts['ALL'] = len(all_data)
+    
+    return all_data, db_counts
 
 def insert_data_to_server(db_name, table_name, data, columns):
     columns = ','.join([str(i) for i in columns.tolist()])
@@ -66,12 +70,12 @@ def add_local_data_to_server_db(db_name, table_name, data, local_to_server_colum
     renamed_data = rename_column_names(data, column_map=local_to_server_columns)
     insert_data_to_server(db_name=db_name, table_name=table_name, data=renamed_data, columns=renamed_data.columns)
         
-def perform_deduplication(incoming_data, db_name, table_name, local_to_server_columns,id_column_name='article_ID', uuid_column_name='article_uuid', condition_1_column_name='citation_version', condition_2_column_name='citation_status', condition_2_dict=medline_status, operation_type_column_name='operation_type'):
+def perform_deduplication(incoming_data, db_name, table_name, local_to_server_columns, stats_monitoring, id_column_name='article_ID', uuid_column_name='article_uuid', condition_1_column_name='citation_version', condition_2_column_name='citation_status', condition_2_dict=medline_status, operation_type_column_name='operation_type'):
     incoming_data = rename_column_names(df=incoming_data,column_map=local_to_server_columns)
     
     server_data = fetch_all_active_duplicate_data(incoming_data=incoming_data, db_name=db_name, table_name=table_name, id_column_name=id_column_name, operation_type_column_name=operation_type_column_name)
 
-    rows_to_insert, rows_to_update = deduplicate_data(server_data, incoming_data, id_column_name, uuid_column_name, condition_1_column_name, condition_2_column_name, condition_2_dict, operation_type_column_name)
+    rows_to_insert, rows_to_update = deduplicate_data(server_data, incoming_data, id_column_name, condition_1_column_name, condition_2_column_name, stats_monitoring)
 
     if not rows_to_insert.empty:
         insert_data_to_server(db_name=db_name, table_name=table_name, data=rows_to_insert, columns=server_data.columns)
@@ -79,4 +83,4 @@ def perform_deduplication(incoming_data, db_name, table_name, local_to_server_co
         update_server_data(db_name, table_name, rows_to_update, operation_type_column_name, 'ACTIVE', 'OVERRIDE', id_column_name)
 
     if config['run_stats']:
-        stats_monitoring.update_incoming_article_stats(total=len(incoming_data),duplicate=len(server_data), outdated=len(rows_to_update))
+        stats_monitoring.update_pre_existing_article_counts(active_dupes=len(server_data), outdated_existing=len(rows_to_update))

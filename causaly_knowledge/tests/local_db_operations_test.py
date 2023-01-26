@@ -84,8 +84,7 @@ def test_get_unique_rows_existence():
 def test_get_unique_rows():
     actual = read_local_data(file_name= test_file_with_duplicates_removed)
     expected = get_unique_rows(df=read_local_data(file_name= test_file_with_duplicates), id_column_name=id_column_name)
-    print(actual.reset_index(drop=True))
-    print(expected.reset_index(drop=True))
+
     assert actual.reset_index(drop=True).equals(expected.reset_index(drop=True))
 
 def test_get_duplicate_rows_existence():
