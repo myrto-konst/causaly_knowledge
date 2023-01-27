@@ -76,11 +76,10 @@ def perform_deduplication(incoming_data, db_name, table_name, local_to_server_co
     server_data = fetch_all_active_duplicate_data(incoming_data=incoming_data, db_name=db_name, table_name=table_name, id_column_name=id_column_name, operation_type_column_name=operation_type_column_name)
 
     rows_to_insert, rows_to_update = deduplicate_data(server_data, incoming_data, id_column_name, condition_1_column_name, condition_2_column_name, stats_monitoring)
-
-    if not rows_to_insert.empty:
-        insert_data_to_server(db_name=db_name, table_name=table_name, data=rows_to_insert, columns=server_data.columns)
     if not rows_to_update.empty:
         update_server_data(db_name, table_name, rows_to_update, operation_type_column_name, 'ACTIVE', 'OVERRIDE', id_column_name)
+    if not rows_to_insert.empty:
+        insert_data_to_server(db_name=db_name, table_name=table_name, data=rows_to_insert, columns=server_data.columns)
 
     if config['run_stats']:
         stats_monitoring.update_pre_existing_article_counts(active_dupes=len(server_data), outdated_existing=len(rows_to_update))

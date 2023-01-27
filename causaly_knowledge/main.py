@@ -19,7 +19,7 @@ def prepare_data(config, stats_monitoring):
 def log_db_status(stats_monitoring, config, before_dedup, monitoring_stage):
     _, counts = fetch_all_data(db_name=config['server_name'], table_name=config['table_name'],columns=list(local_to_server_columns.values()))
     stats_monitoring.update_db_counts(counts=counts, before_dedup=before_dedup)
-    # ask yulia: best way to get line info?
+    # ask yulia: best way to get line info? Does it make sense if it's all in functions?
     stats_monitoring.push_log(monitoring_stage, 0)
 
 if __name__ == "__main__":

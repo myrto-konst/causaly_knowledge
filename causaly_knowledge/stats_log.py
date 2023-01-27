@@ -37,7 +37,7 @@ class StatsLog():
     
     def _validate_overridden_articles(self,input):
         expected = input[existing_key][override][after_key]
-        actual = input[existing_key][override][before_key] + input[incoming_key][outdated_key] + input[existing_outdated_key] + input[incoming_key][latest_key]
+        actual = input[existing_key][override][before_key] + input[incoming_key][outdated_key] + input[existing_outdated_key] 
 
         if expected == actual:
             return SeverityStatus.INFO, 'Everything OK'
@@ -46,7 +46,7 @@ class StatsLog():
     
     def _validate_active_articles(self,input):
         expected = input[existing_key][active][after_key]
-        actual = input[existing_key][active][before_key] + input[incoming_key][new_key] + input[incoming_key][latest_key] - input[existing_outdated_key] - input[existing_outdated_key]
+        actual = input[existing_key][active][before_key] + input[incoming_key][new_key] + input[incoming_key][latest_key] - input[existing_outdated_key]
 
         if expected == actual:
             return SeverityStatus.INFO, 'Everything OK'
@@ -67,8 +67,7 @@ class StatsLog():
                     status, output = self._validate_active_articles(input)
         return status, output
     
-    def set_message(self, inputs):
-        message = self.monitoring_stage.stage_to_message(inputs)
+    def set_message(self, message):
         self.stats_input[_message] = message
     
     def _convert_to_sql_friendly(self):

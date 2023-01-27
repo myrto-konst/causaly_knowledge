@@ -60,29 +60,30 @@ def get_rows_to_insert(outdated_rows, latest_rows, unique_rows, operation_type_c
     outdated_rows_to_insert = assign_new_column_value(get_filtered_data(outdated_rows, operation_type_column_name, ''),operation_type_column_name, '',  'OVERRIDE')
     latest_rows_to_insert = assign_new_column_value(get_filtered_data(latest_rows,operation_type_column_name, ''),operation_type_column_name, '', 'ACTIVE')
     new_rows_to_insert = assign_new_column_value(get_filtered_data(unique_rows,operation_type_column_name, ''),operation_type_column_name, '', 'ACTIVE')
-    
+
     if config['run_stats']:
         stats_monitoring.update_incoming_data(latest=len(latest_rows_to_insert), outdated=len(outdated_rows_to_insert), new=len(new_rows_to_insert))
         stats_monitoring.push_log(monitoring_stage=MonitoringStage.DEDUPLICATION , line=0)
     return pd.concat([outdated_rows_to_insert, latest_rows_to_insert, new_rows_to_insert])
 
-# make operation_type enum -> get_active etc also sourxe field
+def remove_exact_duplicates(data):
+    return get_unique_rows(data, uuid_column_name, keep='first') # get rid of same articles from the input
+
 # do it on row level (replicate)
 def deduplicate_data(server_data, incoming_data, id_column_name, version_column, status_column, stats_monitoring):
     all_data = pd.concat([server_data, incoming_data])
+    data = remove_exact_duplicates(all_data)
+   
+    unique_data = get_unique_rows(data, id_column_name) # leave only unique articles from the input - new incoming data 
+    duplicates = sort_data(get_duplicate_rows(df=data, id_column_name=id_column_name), condition_1_column_name=version_column, condition_2_column_name=status_column)
+    outdated = get_outdated_rows(duplicates, id_column_name, version_column, status_column)
+    latest = get_latest_rows(duplicates, id_column_name, version_column, status_column)
+
+    rows_to_insert = get_rows_to_insert(outdated, latest, unique_data, operation_type_column_name, stats_monitoring)
+    outdated_rows_to_update = assign_new_column_value(get_filtered_data(outdated, operation_type_column_name, 'ACTIVE'), operation_type_column_name, 'ACTIVE', 'OVERRIDE')
+
     if config['run_stats']:
-        # i know this is awful todo please fix
-        stats_monitoring.update_incoming_data(equal=len(all_data)-len(get_unique_rows(all_data, uuid_column_name, keep='first')))
-    all_data = get_unique_rows(all_data, uuid_column_name, keep='first') # get rid of same articles from the input
-
-    unique_data = get_unique_rows(all_data, id_column_name) # leave only unique articles from the input - new incoming data 
-    duplicated_data = sort_data(get_duplicate_rows(df=all_data, id_column_name=id_column_name), condition_1_column_name=version_column, condition_2_column_name=status_column)
-    outdated_rows = get_outdated_rows(duplicated_data, id_column_name, version_column, status_column)
-    latest_rows = get_latest_rows(duplicated_data, id_column_name, version_column, status_column)
- 
-    rows_to_insert = get_rows_to_insert(outdated_rows, latest_rows, unique_data, operation_type_column_name, stats_monitoring)
-    outdated_rows_to_update = assign_new_column_value(get_filtered_data(outdated_rows, operation_type_column_name, 'ACTIVE'), operation_type_column_name, 'ACTIVE', 'OVERRIDE')
-
+        stats_monitoring.update_incoming_data(equal=len(all_data)-len(data))
     return rows_to_insert, outdated_rows_to_update
 
 def add_empty_column(df, column_name):
