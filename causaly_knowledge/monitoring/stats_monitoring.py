@@ -1,6 +1,5 @@
 from datetime import datetime
 from stats_log import StatsLog
-from monitoring.severity_status import SeverityStatus
 from monitoring.monitoring_stage import MonitoringStage
 from monitoring.monitoring_constants import *
 
@@ -73,6 +72,7 @@ class StatsMonitoring():
     def _create_log(self, monitoring_stage, line):
         log = StatsLog(job_id=self.job_id, script=self.script, monitoring_stage=monitoring_stage, line=line)
         severity_status_inputs = {existing_key:self.total_articles_in_db, incoming_key:self.incoming, existing_outdated_key:self.existing_articles_now_outdated} if monitoring_stage == MonitoringStage.DEDUPLICATION_CHECK else {}
+        # externalise
         severity_status, severity_status_value = log.get_severity_status(input=severity_status_inputs)
         log.set_severity_status(severity_status=severity_status)
         

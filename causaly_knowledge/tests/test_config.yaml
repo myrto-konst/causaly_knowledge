@@ -8,4 +8,4 @@ metadata_to_server: 'data/metadata_in_server.csv'
 server_name: 'production_data'
 table_name: 'test_db'
 
-run_stats: 'True'
+run_stats: 'False'

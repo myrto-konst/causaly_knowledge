@@ -174,7 +174,7 @@ def test_fetch_all_active_duplicate_data():
     input = [list(active_row_1.values()),list(active_row_2.values()),list(override_row_3.values())]
     query_db(db_name=db_name,input=input, query=insert_query, batch=True)
     
-    actual = fetch_all_active_duplicate_data(incoming_data=expected, db_name=db_name, table_name=table_name, operation_type_column_name='operation_type', id_column_name='article_ID')
+    actual = fetch_all_active_duplicate_data(incoming_data=expected, db_name=db_name, table_name=table_name, id_column_name='article_ID')
     db.tearDownClass()
 
     assert expected.equals(actual)
@@ -190,9 +190,9 @@ def test_fetch_all_data():
     input = [list(active_row_1.values()),list(active_row_2.values()), list(override_row_3.values())]
     query_db(db_name=db_name,input=input, query=insert_query, batch=True)
     
-    actual = fetch_all_data(db_name=db_name, table_name=table_name, columns=columns)
+    actual, _ = fetch_all_data(db_name=db_name, table_name=table_name, columns=columns)
     db.tearDownClass()
-    
+
     assert expected.equals(actual)
 
 def test_insert_data_to_server():
@@ -253,8 +253,6 @@ def test_perform_deduplication():
     actual = query_db(db_name=db_name, query=fetch_query, return_results=True).sort()
     db.tearDownClass()
     
-    print(expected)
-    print(actual)
     assert expected == actual
 
 

@@ -38,7 +38,7 @@ class StatsLog():
     def _validate_overridden_articles(self,input):
         expected = input[existing_key][override][after_key]
         actual = input[existing_key][override][before_key] + input[incoming_key][outdated_key] + input[existing_outdated_key] 
-
+        
         if expected == actual:
             return SeverityStatus.INFO, 'Everything OK'
         else:

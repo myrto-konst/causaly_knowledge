@@ -14,12 +14,6 @@ equal_key = 'equal'
 total_key = 'total'
 unique_key = 'unique'
 
-active = 'ACTIVE'
-all = 'ALL'
-override = 'OVERRIDE'
-deleted = 'DELETED'
-operation_types = [all, active, override, deleted]
-
 existing_key = 'existing'
 incoming_key = 'incoming'
 existing_outdated_key = 'outdated_in_db'

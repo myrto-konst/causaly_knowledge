@@ -1,5 +1,4 @@
 from enum import Enum 
-from monitoring.severity_status import SeverityStatus
 
 class MonitoringStage(Enum):
     PROCESS_BEGINNING = 1

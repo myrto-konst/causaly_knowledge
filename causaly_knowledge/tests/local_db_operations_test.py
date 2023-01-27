@@ -1,6 +1,7 @@
 from local_db_operations import read_local_data, rename_column_names, get_unique_rows, get_duplicate_rows,\
  get_latest_rows,keep_latest_unique_rows, add_empty_column, add_uuid_column, get_outdated_rows,get_filtered_data,\
     assign_new_column_value
+from mapping_constants import server_to_local_columns
 from os.path import exists
 import pandas as pd
 
@@ -14,16 +15,8 @@ test_file_added_empty_column = '../test_data/metadata_added_empty_column.csv'
 test_file_added_uuid_column = '../test_data/metadata_uuid_column.csv'
 test_file_assign_new_value_column = '../test_data/duplicates_metadata_all_columns.csv'
 
-server_to_local_columns={'article_name': 'name', 
-    'article_ID': 'ID', 
-    'journal_name': 'journal',
-    'citation_status': 'article_status',
-    'citation_version': 'article_version',
-    'article_uuid': 'uuid',
-    'operation_type': 'operation_type'
-}
-
 id_column_name = 'article_ID'
+uuid_column_name = 'article_uuid'
 condition_1_column_name = 'citation_version'
 condition_2_column_name = 'citation_status'
 condition_2_dict= {
@@ -101,37 +94,37 @@ def test_get_duplicate_rows():
 
 def test_get_outdated_rows_existence():
     actual = exists(test_file_with_duplicates)
-    expected = type(get_outdated_rows(df=read_local_data(file_name= test_file_with_duplicates), id_column_name=id_column_name, condition_1_column_name=condition_1_column_name, condition_2_column_name=condition_2_column_name, condition_2_dict=condition_2_dict)) != None
+    expected = type(get_outdated_rows(df=read_local_data(file_name= test_file_with_duplicates), id_column_name=id_column_name, condition_1_column_name=condition_1_column_name, condition_2_column_name=condition_2_column_name)) != None
     
     assert actual == expected
 
 def test_get_outdated_rows():
     actual = read_local_data(file_name= test_file_outdated).sort_values(by=id_column_name)
-    expected = get_outdated_rows(df=read_local_data(file_name= test_file_with_duplicates), id_column_name=id_column_name, condition_1_column_name=condition_1_column_name, condition_2_column_name=condition_2_column_name, condition_2_dict=condition_2_dict).sort_values(by=id_column_name)
+    expected = get_outdated_rows(df=read_local_data(file_name= test_file_with_duplicates), id_column_name=id_column_name, condition_1_column_name=condition_1_column_name, condition_2_column_name=condition_2_column_name).sort_values(by=id_column_name)
   
     assert actual.reset_index(drop=True).equals(expected.reset_index(drop=True))
 
 def test_get_latest_rows_existence():
     actual = exists(test_file_with_duplicates)
-    expected = type(get_latest_rows(df=read_local_data(file_name= test_file_with_duplicates), id_column_name=id_column_name, condition_1_column_name=condition_1_column_name, condition_2_column_name=condition_2_column_name, condition_2_dict=condition_2_dict)) != None
+    expected = type(get_latest_rows(df=read_local_data(file_name= test_file_with_duplicates), id_column_name=id_column_name, condition_1_column_name=condition_1_column_name, condition_2_column_name=condition_2_column_name)) != None
     
     assert actual == expected
 
 def test_get_latest_rows():
     actual = read_local_data(file_name= test_file_deduplicated).sort_values(by=id_column_name)
-    expected = get_latest_rows(df=read_local_data(file_name= test_file_with_duplicates), id_column_name=id_column_name, condition_1_column_name=condition_1_column_name, condition_2_column_name=condition_2_column_name, condition_2_dict=condition_2_dict).sort_values(by=id_column_name)
+    expected = get_latest_rows(df=read_local_data(file_name= test_file_with_duplicates), id_column_name=id_column_name, condition_1_column_name=condition_1_column_name, condition_2_column_name=condition_2_column_name).sort_values(by=id_column_name)
     
     assert actual.reset_index(drop=True).equals(expected.reset_index(drop=True))
 
 def test_keep_latest_unique_rows_existence():
     actual = exists(test_file_with_duplicates)
-    expected = type(keep_latest_unique_rows(df=read_local_data(file_name= test_file_with_duplicates), id_column_name=id_column_name, condition_1_column_name=condition_1_column_name, condition_2_column_name=condition_2_column_name, condition_2_dict=condition_2_dict)) != None
+    expected = type(keep_latest_unique_rows(df=read_local_data(file_name= test_file_with_duplicates), id_column_name=id_column_name, condition_1_column_name=condition_1_column_name, condition_2_column_name=condition_2_column_name)) != None
     
     assert actual == expected
 
 def test_keep_latest_unique_rows():
     actual = read_local_data(file_name= test_file_deduplicated).sort_values(by=id_column_name)
-    expected = keep_latest_unique_rows(df=read_local_data(file_name= test_file_with_duplicates), id_column_name=id_column_name, condition_1_column_name=condition_1_column_name, condition_2_column_name=condition_2_column_name, condition_2_dict=condition_2_dict).sort_values(by=id_column_name)
+    expected = keep_latest_unique_rows(df=read_local_data(file_name= test_file_with_duplicates), id_column_name=id_column_name, condition_1_column_name=condition_1_column_name, condition_2_column_name=condition_2_column_name).sort_values(by=id_column_name)
     
     assert actual.reset_index(drop=True).equals(expected.reset_index(drop=True))
 
@@ -161,13 +154,13 @@ def test_add_empty_column():
 
 def test_add_uuid_column_existence():
     actual = exists(test_file_added_uuid_column)
-    expected = type(add_uuid_column(df=read_local_data(file_name= test_file_with_duplicates),  id_column_name=id_column_name, uuid_column_name='article_uuid', status_column_name=condition_2_column_name, version_column_name=condition_1_column_name)) != None
+    expected = type(add_uuid_column(df=rename_column_names(read_local_data(file_name= test_file_deduplicated), column_map=server_to_local_columns))) != None
     
     assert actual == expected
 
 def test_add_uuid_column():
-    actual = read_local_data(file_name=test_file_added_uuid_column)
-    expected = add_uuid_column(df=read_local_data(file_name= test_file_deduplicated),  id_column_name=id_column_name, uuid_column_name='article_uuid', status_column_name=condition_2_column_name, version_column_name=condition_1_column_name)
+    actual = read_local_data(file_name=test_file_added_uuid_column)[uuid_column_name].sort_values()
+    expected = add_uuid_column(df=rename_column_names(read_local_data(file_name= test_file_deduplicated), column_map=server_to_local_columns))[uuid_column_name].sort_values()
     print(actual)
     print(expected)
     assert actual.equals(expected)
