@@ -1,7 +1,7 @@
 import pandas as pd
 from config_module import config 
 from mapping_constants import medline_status
-from monitoring.monitoring_stage import MonitoringStage
+from monitoring.enums import MonitoringStage
 
 uuid_column_name= 'article_uuid' 
 local_id_column_name='ID' 

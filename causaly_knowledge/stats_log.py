@@ -1,9 +1,9 @@
 import pandas as pd
 from datetime import datetime
 from server_db_operations import insert_data_to_server
-from monitoring.severity_status import SeverityStatus
-from monitoring.monitoring_stage import MonitoringStage
+from monitoring.enums import SeverityStatus, MonitoringStage
 from monitoring.monitoring_constants import *
+from monitoring.validator import Validator
 
 _job_id = 'job_id'
 _script = 'script'
@@ -26,46 +26,16 @@ class StatsLog():
             _message: '',
             _severity: SeverityStatus.INFO                
         }
-    
-    def _validate_total_articles(self,input):
-        expected = input[existing_key][all][after_key]
-        actual = input[existing_key][all][before_key] + input[incoming_key][unique_key]-input[incoming_key][equal_key] 
-        if expected == actual:
-            return SeverityStatus.INFO, 'Everything OK'
-        else:
-            return SeverityStatus.ERROR, f'Wrong total articles in db: expected {expected}, actual {actual}'
-    
-    def _validate_overridden_articles(self,input):
-        expected = input[existing_key][override][after_key]
-        actual = input[existing_key][override][before_key] + input[incoming_key][outdated_key] + input[existing_outdated_key] 
-        
-        if expected == actual:
-            return SeverityStatus.INFO, 'Everything OK'
-        else:
-            return SeverityStatus.ERROR, f'Wrong total overridden articles in db: expected {expected}, actual {actual}'
-    
-    def _validate_active_articles(self,input):
-        expected = input[existing_key][active][after_key]
-        actual = input[existing_key][active][before_key] + input[incoming_key][new_key] + input[incoming_key][latest_key] - input[existing_outdated_key]
-
-        if expected == actual:
-            return SeverityStatus.INFO, 'Everything OK'
-        else:
-            return SeverityStatus.ERROR, f'Wrong total active articles in db: expected {expected}, actual {actual}'
-    
+      
     def set_severity_status(self, severity_status):
         self.stats_input[_severity] = severity_status
 
     def get_severity_status(self, input):
         status = SeverityStatus.INFO
-        output = ''
+        message = ''
         if self.monitoring_stage == MonitoringStage.DEDUPLICATION_CHECK:
-            status, output = self._validate_total_articles(input)
-            if status == SeverityStatus.INFO:
-                status, output = self._validate_overridden_articles(input)
-                if status == SeverityStatus.INFO:
-                    status, output = self._validate_active_articles(input)
-        return status, output
+            status, message = Validator(input).validate_deduplication()
+        return status, message
     
     def set_message(self, message):
         self.stats_input[_message] = message

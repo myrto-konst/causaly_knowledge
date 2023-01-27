@@ -4,7 +4,7 @@ from mapping_constants import  server_to_local_columns, local_to_server_columns
 import os
 from config_module import get_config
 from monitoring.stats_monitoring import StatsMonitoring
-from monitoring.monitoring_stage import MonitoringStage
+from monitoring.enums import MonitoringStage
 
 def prepare_db(config):
     server_data = rename_column_names(df=read_local_data(file_name=config['metadata_to_server']), column_map=server_to_local_columns)
@@ -19,7 +19,7 @@ def prepare_data(config, stats_monitoring):
 def log_db_status(stats_monitoring, config, before_dedup, monitoring_stage):
     _, counts = fetch_all_data(db_name=config['server_name'], table_name=config['table_name'],columns=list(local_to_server_columns.values()))
     stats_monitoring.update_db_counts(counts=counts, before_dedup=before_dedup)
-    # ask yulia: best way to get line info? Does it make sense if it's all in functions?
+    # ask yulia: best way to get line info? Does it make sense if it's all
     stats_monitoring.push_log(monitoring_stage, 0)
 
 if __name__ == "__main__":
